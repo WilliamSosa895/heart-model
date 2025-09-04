@@ -32,25 +32,21 @@ jobs:
     - name: Train model
       run: cd model && python train.py
 
-    # Construir imagen Docker con dos tags (sha + latest)
-    - name: Docker build
-      run: |
-        docker build -t ${{ secrets.DOCKER_USER }}/${{ secrets.MODEL_NAME }}:${{ github.sha }} \
-                     -t ${{ secrets.DOCKER_USER }}/${{ secrets.MODEL_NAME }}:latest .
-
-    - name: Show images
+    - name: docker build
+      run: docker build -t ${{secrets.DOCKER_USER}}/${{secrets.MODEL_NAME}}:${{github.sha}} .
+    - name: show images
       run: docker images
 
-    # Login a Docker Hub
-    - name: Docker login
+    - name: docker login
       env:
-        DOCKER_USER: ${{ secrets.DOCKER_USER }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-
-    # Push de ambas imágenes
-    - name: Docker push
+        DOCKER_USER: ${{secrets.DOCKER_USER}}
+        DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
       run: |
-        docker push ${{ secrets.DOCKER_USER }}/${{ secrets.MODEL_NAME }}:${{ github.sha }}
-        docker push ${{ secrets.DOCKER_USER }}/${{ secrets.MODEL_NAME }}:latest
+        docker login -u $DOCKER_USER -p $DOCKER_PASSWORD 
+    - name: docker Push
+      run: docker push ${{secrets.DOCKER_USER}}/${{secrets.MODEL_NAME}}:${{ github.sha }}
+
+
+
+
 
