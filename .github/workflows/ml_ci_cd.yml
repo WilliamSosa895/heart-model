@@ -1,4 +1,5 @@
 name: Modelops deploy
+
 on:
   push:
     branches: [ master ]
@@ -6,22 +7,46 @@ on:
     branches: [ master ]
   repository_dispatch:
     types: [ml_ci_cd]
+
 jobs:
   ml_ci_cd:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.8]
+
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-          python-version: ${{ matrix.python-version }}
+        python-version: ${{ matrix.python-version }}
+
     - name: list 
       run: python --version
-    - name: pip install
+
+    - name: Install dependencies
       run: pip install -r requirements.txt
-    - name: train model
+
+    - name: Train model
       run: cd model && python train.py
+
+    # Construir imagen Docker
+    - name: Docker build
+      run: docker build -t ${{ secrets.DOCKER_USER }}/${{ secrets.MODEL_NAME }}:${{ github.sha }} .
+
+    - name: Show images
+      run: docker images
+
+    # Login a Docker Hub
+    - name: Docker login
+      env:
+        DOCKER_USER: ${{ secrets.DOCKER_USER }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
+
+    # Push de la imagen
+    - name: Docker push
+      run: docker push ${{ secrets.DOCKER_USER }}/${{ secrets.MODEL_NAME }}:${{ github.sha }}
 
